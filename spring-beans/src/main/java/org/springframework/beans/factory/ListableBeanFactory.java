@@ -55,6 +55,20 @@ import org.springframework.lang.Nullable;
  * @see HierarchicalBeanFactory
  * @see BeanFactoryUtils
  */
+
+//获取bean时,Spring 鼓励使用这个接口定义的api。
+//
+//提供容器中bean迭代的功能,不再需要一个个bean地查找.比如可以一次获取全部的bean,根据类型获取bean
+//在看SpringMVC时,扫描包路径下的具体实现策略就是使用的这种方式(那边使用的是BeanFactoryUtils封装的api).
+//
+// 如果同时实现了HierarchicalBeanFactory,返回值不会考虑父类BeanFactory,只考虑当前factory定义的类.
+// 当然也可以使用BeanFactoryUtils辅助类来查找祖先工厂中的类.
+//
+// 这个接口中的方法只会考虑本factory定义的bean.这些方法会忽略ConfigurableBeanFactory的registerSingleton注册的单例bean(getBeanNamesOfType和getBeansOfType是例外,一样会考虑手动注册的单例).
+// 当然BeanFactory的getBean一样可以透明访问这些特殊bean.
+//
+//注意:getBeanDefinitionCount和containsBeanDefinition的实现方法因为效率比较低,还是少用为好.
+
 public interface ListableBeanFactory extends BeanFactory {
 
 	/**
@@ -66,6 +80,7 @@ public interface ListableBeanFactory extends BeanFactory {
 	 * @return if this bean factory contains a bean definition with the given name
 	 * @see #containsBean
 	 */
+	//是否包含bean
 	boolean containsBeanDefinition(String beanName);
 
 	/**
@@ -75,6 +90,7 @@ public interface ListableBeanFactory extends BeanFactory {
 	 * other means than bean definitions.
 	 * @return the number of beans defined in the factory
 	 */
+	// 当前factory中定义的bean数量
 	int getBeanDefinitionCount();
 
 	/**
@@ -85,6 +101,7 @@ public interface ListableBeanFactory extends BeanFactory {
 	 * @return the names of all beans defined in this factory,
 	 * or an empty array if none defined
 	 */
+	//获取当前工厂中定义的所有bean的name
 	String[] getBeanDefinitionNames();
 
 	/**
@@ -114,6 +131,7 @@ public interface ListableBeanFactory extends BeanFactory {
 	 * @see FactoryBean#getObjectType
 	 * @see BeanFactoryUtils#beanNamesForTypeIncludingAncestors(ListableBeanFactory, ResolvableType)
 	 */
+	//这边的方法仅检查顶级bean.它不会检查嵌套的bean.
 	String[] getBeanNamesForType(ResolvableType type);
 
 	/**

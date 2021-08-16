@@ -113,6 +113,13 @@ import org.springframework.lang.Nullable;
  * @see DisposableBean#destroy
  * @see org.springframework.beans.factory.support.RootBeanDefinition#getDestroyMethodName
  */
+//BeanFactory 是Spring bean容器的根接口.提供获取bean,是否包含bean,是否单例与原型,获取bean类型,bean 别名的api。
+//体现了设计模式原则里的接口隔离原则
+//这边清晰地定义了如下的体系:（见继承关系图）
+//　　根接口BeanFactory(基础容器)
+//　　第二层: 第三方集成,继承体系,遍历bean
+//　　第三层: 配置功能
+//　　第四层: 配置+迭代
 public interface BeanFactory {
 
 	/**
@@ -121,6 +128,8 @@ public interface BeanFactory {
 	 * {@code myJndiObject} is a FactoryBean, getting {@code &myJndiObject}
 	 * will return the factory, not the instance returned by the factory.
 	 */
+	//用于区别FactoryBean,和FactoryBean创建的beans。
+	//注:Bean和FactoryBean为Spring中的两种bean,bean为普通bean,FactoryBean为工厂bean,都由BeanFactory管理。
 	String FACTORY_BEAN_PREFIX = "&";
 
 
@@ -249,6 +258,9 @@ public interface BeanFactory {
 	 * @param name the name of the bean to query
 	 * @return whether a bean with the given name is present
 	 */
+
+	//判断是否包含bean.陷阱出现:这边不管类是否抽象类,懒加载,是否在容器范围内,
+	//只要符合都返回true,所以这边true,不一定能从getBean获取实例。
 	boolean containsBean(String name);
 
 	/**
