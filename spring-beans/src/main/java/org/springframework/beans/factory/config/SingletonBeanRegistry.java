@@ -55,6 +55,8 @@ public interface SingletonBeanRegistry {
 	 * @see org.springframework.beans.factory.DisposableBean#destroy
 	 * @see org.springframework.beans.factory.support.BeanDefinitionRegistry#registerBeanDefinition
 	 */
+	//在容器内注册一个单例类（这个是已经完全初始化以后的bean放进去，不会调用回调方法（InitializingBean的afterPropertiesSet方法）
+	//在完整的 BeanFactory 中运行时：如果您的 bean 应该接收初始化和/或销毁回调，则注册 bean 定义而不是现有实例。
 	void registerSingleton(String beanName, Object singletonObject);
 
 	/**
@@ -71,6 +73,7 @@ public interface SingletonBeanRegistry {
 	 * @see ConfigurableListableBeanFactory#getBeanDefinition
 	 */
 	@Nullable
+	//返回给定名称对应的单例类
 	Object getSingleton(String beanName);
 
 	/**
@@ -95,6 +98,10 @@ public interface SingletonBeanRegistry {
 	 * @see org.springframework.beans.factory.ListableBeanFactory#containsBeanDefinition
 	 * @see org.springframework.beans.factory.BeanFactory#containsBean
 	 */
+	//给定名称是否对应单例类
+	//只检查已经实例化的单例； 对于尚未实例化的单例 bean 定义，不返回true 。
+	//此方法的主要目的是检查手动注册的单例（请参阅registerSingleton ）。 也可用于检查是否已经创建了由 bean 定义定义的单例。
+	//要检查 bean 工厂是否包含具有给定名称的 bean 定义，请使用 ListableBeanFactory 的containsBeanDefinition 。
 	boolean containsSingleton(String beanName);
 
 	/**
@@ -109,6 +116,9 @@ public interface SingletonBeanRegistry {
 	 * @see org.springframework.beans.factory.support.BeanDefinitionRegistry#getBeanDefinitionNames
 	 * @see org.springframework.beans.factory.ListableBeanFactory#getBeanDefinitionNames
 	 */
+	//返回容器内所有单例类的名字
+	//返回在此注册表中注册的单例 bean 的名称。
+	//只检查已经实例化的单例； 不返回尚未实例化的单例 bean 定义的名称
 	String[] getSingletonNames();
 
 	/**
@@ -123,6 +133,8 @@ public interface SingletonBeanRegistry {
 	 * @see org.springframework.beans.factory.support.BeanDefinitionRegistry#getBeanDefinitionCount
 	 * @see org.springframework.beans.factory.ListableBeanFactory#getBeanDefinitionCount
 	 */
+	//返回容器内注册的单例类数量
+	//只检查已经实例化的单例； 不计算尚未实例化的单例 bean 定义。
 	int getSingletonCount();
 
 	/**
@@ -130,6 +142,9 @@ public interface SingletonBeanRegistry {
 	 * @return the mutex object (never {@code null})
 	 * @since 4.2
 	 */
+	//返回单例互斥锁
+	//org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.getSingletonFactoryBeanForTypeCheck
+	//直接使用this.singletonObjects做为锁，来进行bean的获取，销毁，和缓存清除
 	Object getSingletonMutex();
 
 }

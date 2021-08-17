@@ -140,12 +140,19 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * Dependency types to ignore on dependency check and autowire, as Set of
 	 * Class objects: for example, String. Default is none.
 	 */
+	//ConfigurableListableBeanFactory
+	//调用ignoreDependencyInterface方法后，
+	// 被忽略的接口会存储在BeanFactory的名为ignoredDependencyInterfaces的Set集合中，
+	// 而调用ignoreDependencyType则存储在ignoredDependencyTypes的Set集合中：
 	private final Set<Class<?>> ignoredDependencyTypes = new HashSet<>();
 
 	/**
 	 * Dependency interfaces to ignore on dependency check and autowire, as Set of
 	 * Class objects. By default, only the BeanFactory interface is ignored.
 	 */
+	//ConfigurableListableBeanFactory
+    //ignoredDependencyInterfaces集合在同类中被使用仅在一处：
+	// AbstractAutowireCapableBeanFactory.isExcludedFromDependencyCheck方法
 	private final Set<Class<?>> ignoredDependencyInterfaces = new HashSet<>();
 
 	/**
@@ -1555,6 +1562,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @see #ignoreDependencyInterface(Class)
 	 */
 	protected boolean isExcludedFromDependencyCheck(PropertyDescriptor pd) {
+		//isExcludedFromDependencyCheck方法的意思是判断给定的bean属性在依赖检测中要被排除，
+		// 假如该方法返回true，也就是在依赖检测中这个bean的属性要被排除，在自动装配时就会被忽略。
+		//而ignoredDependencyInterface的真正作用还得看AutowireUtils类的isSetterDefinedInInterface方法。
 		return (AutowireUtils.isExcludedFromDependencyCheck(pd) ||
 				this.ignoredDependencyTypes.contains(pd.getPropertyType()) ||
 				AutowireUtils.isSetterDefinedInInterface(pd, this.ignoredDependencyInterfaces));

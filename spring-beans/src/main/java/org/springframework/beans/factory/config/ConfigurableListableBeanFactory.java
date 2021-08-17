@@ -42,11 +42,15 @@ import org.springframework.lang.Nullable;
 public interface ConfigurableListableBeanFactory
 		extends ListableBeanFactory, AutowireCapableBeanFactory, ConfigurableBeanFactory {
 
+
+
 	/**
 	 * Ignore the given dependency type for autowiring:
 	 * for example, String. Default is none.
 	 * @param type the dependency type to ignore
 	 */
+	//忽略自动装配的依赖类型
+	//ignoreDependencyType()方法只影响xml配置自动装配的依赖注入方式.
 	void ignoreDependencyType(Class<?> type);
 
 	/**
@@ -60,7 +64,22 @@ public interface ConfigurableListableBeanFactory
 	 * @see org.springframework.beans.factory.BeanFactoryAware
 	 * @see org.springframework.context.ApplicationContextAware
 	 */
+	//忽略自动装配的接口（见单独分析）
 	void ignoreDependencyInterface(Class<?> ifc);
+
+	//用途：
+	//Spring的普通bean的依赖注入时从容器中寻找符合条件的Bean注入进来，
+	// 但对于特殊的bean如容器ApplicationContext，BeanFactory本身，
+	// 是无法在容器中找到的，这种Bean需要特定的方法来进行注入，即通过ApplicationContextAware和BeanFactoryAware来注入。
+	//Spring中已经将ApplicationContextAware和BeanFactoryAware作为依赖忽略接口，
+	// 当有bean实现了这些接口，表示他们需要一个ApplicationContext注入到自己的applicationContextAware属性中，
+
+	//这也证明了。
+	//英语中的autowiring特定指的是通过beans标签default-autowire属性来依赖注入的方式，而不是指使用@Autowired注解进行的依赖注入。
+	// 区别在于，使用default-autowire会自动给所有的类都会从容器中查找匹配的依赖并注入，
+	// 而使用@Autowired注解只会给这些注解的对象从容器查找依赖并注入。
+	//自动装配和@Autowired注解的装配不是同一回事。
+
 
 	/**
 	 * Register a special dependency type with corresponding autowired value.
