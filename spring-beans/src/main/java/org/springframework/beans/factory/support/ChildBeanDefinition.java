@@ -44,6 +44,15 @@ import org.springframework.util.ObjectUtils;
  * @see RootBeanDefinition
  */
 @SuppressWarnings("serial")
+/**
+ * 该类继承自 AbstractBeanDefinition。其相当于一个子类，不可以单独存在，必须依赖一个父 BeanDetintion，
+ * 构造 ChildBeanDefinition 时，通过构造方法传入父 BeanDetintion 的名称或通过 setParentName 设置父名称。
+ * 它可以从父类继承方法参数、属性值，并可以重写父类的方法，同时也可以增加新的属性或者方法。
+ * 若重新定义 init 方法，destroy 方法或者静态工厂方法，ChildBeanDefinition 会重写父类的设置。
+ * 从 Spring 2.5 开始，以编程方式注册 Bean 定义的首选方法是 GenericBeanDefinition，
+ * GenericBeanDefinition 可以有效替代 ChildBeanDefinition 的绝大分部使用场合。
+ */
+
 public class ChildBeanDefinition extends AbstractBeanDefinition {
 
 	@Nullable

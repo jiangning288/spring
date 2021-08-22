@@ -212,27 +212,67 @@ public class AnnotatedBeanDefinitionReader {
 	 */
 	<T> void doRegisterBean(Class<T> annotatedClass, @Nullable Supplier<T> instanceSupplier, @Nullable String name,
 			@Nullable Class<? extends Annotation>[] qualifiers, BeanDefinitionCustomizer... definitionCustomizers) {
-
+		/**
+		 * 根据指定的bean创建一个AnnotatedGenericBeanDefinition
+		 * 这个AnnotatedGenericBeanDefinition可以理解为一个数据结构
+		 * AnnotatedGenericBeanDefinition包含了类的其他信息,比如一些元信息
+		 * scope，lazy等等
+		 */
 		AnnotatedGenericBeanDefinition abd = new AnnotatedGenericBeanDefinition(annotatedClass);
+
+		/**
+		 * 根据@Conditional装配条件判断是否需要跳过注册
+		 */
 		if (this.conditionEvaluator.shouldSkip(abd.getMetadata())) {
 			return;
 		}
-
+		/**
+		 * 设置Supplier，用于new bean
+		 */
 		abd.setInstanceSupplier(instanceSupplier);
+		/**
+		 * 得到类的作用域
+		 */
 		ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(abd);
+		/**
+		 * 把类的作用域添加到数据结构结构中
+		 */
 		abd.setScope(scopeMetadata.getScopeName());
+		/**
+		 * 生成类的名字通过beanNameGenerator
+		 */
 		String beanName = (name != null ? name : this.beanNameGenerator.generateBeanName(abd, this.registry));
 
+		/**
+		 * 处理类当中的通用注解
+		 * 分析源码可以知道他主要处理：@Lazy @DependsOn @Primary @Role @Description注解
+		 * 处理完成之后processCommonDefinitionAnnotations中依然是把他添加到数据结构当中
+		 *
+		 */
 		AnnotationConfigUtils.processCommonDefinitionAnnotations(abd);
+
+		/**
+		 *【注】从register进来的话，qualifiers永远为空，spring写这段逻辑是为了给其他类用。
+		 * 如果在向容器注册注解Bean定义时，使用了额外的限定符注解则解析
+		 * 关于Qualifier和Primary前面的课当中讲过，主要涉及到spring的自动装配
+		 * 这里需要注意的
+		 * byName和qualifiers这个变量是Annotation类型的数组，里面存不仅仅是Qualifier注解
+		 * 理论上里面里面存的是一切注解，所以可以看到下面的代码spring去循环了这个数组
+		 * 然后依次判断了注解当中是否包含了Primary，是否包含了Lazy
+		 */
 		if (qualifiers != null) {
 			for (Class<? extends Annotation> qualifier : qualifiers) {
+				//如果配置了@Primary注解，如果加了则作为首选
 				if (Primary.class == qualifier) {
 					abd.setPrimary(true);
 				}
+				//懒加载，前面加过
 				else if (Lazy.class == qualifier) {
 					abd.setLazyInit(true);
 				}
 				else {
+					//如果使用了除@Primary和@Lazy以外的其他注解，则为该Bean添加一个根据名字自动装配的限定符
+					//这里难以理解，后面会详细介绍
 					abd.addQualifier(new AutowireCandidateQualifier(qualifier));
 				}
 			}
@@ -241,8 +281,26 @@ public class AnnotatedBeanDefinitionReader {
 			customizer.customize(abd);
 		}
 
+		/**
+		 * 这个BeanDefinitionHolder也是一个数据结构
+		 */
 		BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(abd, beanName);
+
+		/**
+		 * ScopedProxyMode 这个知识点比较复杂，需要结合web去理解（这个不是AOP代理模型，是代理模式）
+		 * 可以暂时放一下，等说道springmvc的时候再说
+		 * 或者看情况现在说也是一样的
+		 */
 		definitionHolder = AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
+
+		/**
+		 * 把上述的这个数据结构注册给registry
+		 * registry就是AnnotatonConfigApplicationContext
+		 * AnnotatonConfigApplicationContext在初始化的時候通過調用父类的構造方法
+		 * 实例化了一个DefaultListableBeanFactory
+		 * *registerBeanDefinition里面就是把definitionHolder这个数据结构包含的信息注册到
+		 * DefaultListableBeanFactory这个工厂
+		 */
 		BeanDefinitionReaderUtils.registerBeanDefinition(definitionHolder, this.registry);
 	}
 

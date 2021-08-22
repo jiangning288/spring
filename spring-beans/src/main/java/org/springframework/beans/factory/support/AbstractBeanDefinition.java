@@ -54,6 +54,11 @@ import org.springframework.util.StringUtils;
  * @see RootBeanDefinition
  * @see ChildBeanDefinition
  */
+
+/**
+ * AbstractBeanDefinition 是 BeanDefinition 的子抽象类，也是其他 BeanDefinition 类型的基类，
+ * 其实现了接口中定义的一系列操作方法，并定义了一系列的常量属性，这些常量会直接影响到 Spring 实例化 Bean 时的策略。核心属性如下。
+ */
 @SuppressWarnings("serial")
 public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccessor
 		implements BeanDefinition, Cloneable {
@@ -62,30 +67,35 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * Constant for the default scope name: {@code ""}, equivalent to singleton
 	 * status unless overridden from a parent bean definition (if applicable).
 	 */
+	// 默认的 SCOPE，默认是单例
 	public static final String SCOPE_DEFAULT = "";
 
 	/**
 	 * Constant that indicates no autowiring at all.
 	 * @see #setAutowireMode
 	 */
+	// 不进行自动装配
 	public static final int AUTOWIRE_NO = AutowireCapableBeanFactory.AUTOWIRE_NO;
 
 	/**
 	 * Constant that indicates autowiring bean properties by name.
 	 * @see #setAutowireMode
 	 */
+	// 根据 Bean 的名字进行自动装配，byName
 	public static final int AUTOWIRE_BY_NAME = AutowireCapableBeanFactory.AUTOWIRE_BY_NAME;
 
 	/**
 	 * Constant that indicates autowiring bean properties by type.
 	 * @see #setAutowireMode
 	 */
+	// 根据 Bean 的类型进行自动装配，byType
 	public static final int AUTOWIRE_BY_TYPE = AutowireCapableBeanFactory.AUTOWIRE_BY_TYPE;
 
 	/**
 	 * Constant that indicates autowiring a constructor.
 	 * @see #setAutowireMode
 	 */
+	// 根据构造器进行自动装配
 	public static final int AUTOWIRE_CONSTRUCTOR = AutowireCapableBeanFactory.AUTOWIRE_CONSTRUCTOR;
 
 	/**
@@ -96,8 +106,11 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * use annotation-based autowiring for clearer demarcation of autowiring needs.
 	 */
 	@Deprecated
+	//Spring 3.0 之后已废除
 	public static final int AUTOWIRE_AUTODETECT = AutowireCapableBeanFactory.AUTOWIRE_AUTODETECT;
 
+	// 通过依赖检查来查看 Bean 的每个属性是否都设置完成
+	// 以下常量分别对应：不检查、对依赖对象检查、对基本类型，字符串和集合进行检查、对全部属性进行检查
 	/**
 	 * Constant that indicates no dependency check at all.
 	 * @see #setDependencyCheck
@@ -134,26 +147,34 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * <p>Currently, the method names detected during destroy method inference
 	 * are "close" and "shutdown", if present on the specific bean class.
 	 */
+	// 关闭应用上下文时需调用的方法名称
 	public static final String INFER_METHOD = "(inferred)";
 
-
+	// 存放 Bean 的 Class 对象
 	@Nullable
 	private volatile Object beanClass;
 
+	// Bean 的作用范围
 	@Nullable
 	private String scope = SCOPE_DEFAULT;
 
+	//非抽象
 	private boolean abstractFlag = false;
 
+	// 非延迟加载
 	private boolean lazyInit = false;
 
+	// 默认不自动装配
 	private int autowireMode = AUTOWIRE_NO;
 
+	// 默认不依赖检查
 	private int dependencyCheck = DEPENDENCY_CHECK_NONE;
 
+	// 依赖的 Bean 列表
 	@Nullable
 	private String[] dependsOn;
 
+	// 可以作为自动装配的候选者，意味着可以自动装配到其他 Bean 的某个属性中
 	private boolean autowireCandidate = true;
 
 	private boolean primary = false;
@@ -161,44 +182,67 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	private final Map<String, AutowireCandidateQualifier> qualifiers = new LinkedHashMap<>();
 
 	@Nullable
+	//Spring5中添加
+	/**
+	 * 调用我们指定的Supplier的get()方法获取bean的实例
+	 * 进行一些相关的设置操作
+	 * 如果没有创建对象,直接创建一个NullBean对象.
+	 * 最后是对BeanWrapper对象的创建以及初始化的操作
+	 * 不管是静态工厂还是工厂方法，都需要通过反射调用目标方法创建对象，反射或多或少影响性能，如果不使用反射呢？
+	 * 就是面向java8函数式接口编程，就是提供一个回调方法，直接调用回调方法即可，不需要通过反射了。
+	 * 源码位置：
+	 * org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#createBeanInstance
+	 *
+	 */
 	private Supplier<?> instanceSupplier;
 
 	private boolean nonPublicAccessAllowed = true;
 
 	private boolean lenientConstructorResolution = true;
 
+	// 创建当前 Bean 实例工厂类名称
 	@Nullable
 	private String factoryBeanName;
 
+	// 创建当前 Bean 实例工厂类中方法名称
 	@Nullable
 	private String factoryMethodName;
 
+	//存储构造方法的参数
 	@Nullable
 	private ConstructorArgumentValues constructorArgumentValues;
 
+	// 存储 Bean 属性名称以及对应的值
 	@Nullable
 	private MutablePropertyValues propertyValues;
 
+	// 存储被覆盖的方法信息
 	@Nullable
 	private MethodOverrides methodOverrides;
 
+	// init、destroy 方法名称
 	@Nullable
 	private String initMethodName;
 
 	@Nullable
 	private String destroyMethodName;
 
+	// 是否强制执行 init 和 destroy 方法
 	private boolean enforceInitMethod = true;
 
 	private boolean enforceDestroyMethod = true;
 
+	// Bean 是否是用户定义的而不是应用程序本身定义的
 	private boolean synthetic = false;
 
+	// Bean 的身份类别，默认是用户定义的 Bean
 	private int role = BeanDefinition.ROLE_APPLICATION;
 
+	// Bean 的描述信息
 	@Nullable
 	private String description;
 
+	// Bean 定义的资源
 	@Nullable
 	private Resource resource;
 
@@ -701,6 +745,8 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * @see #setConstructorArgumentValues(ConstructorArgumentValues)
 	 * @see #setPropertyValues(MutablePropertyValues)
 	 */
+	//就是替代工厂方法（包含静态工厂）或者构造器创建对象，但是其后面的生命周期回调不影响。
+	//也就是框架在创建对象的时候会校验这个instanceSupplier是否有值，有的话，调用这个字段获取对象。
 	public void setInstanceSupplier(@Nullable Supplier<?> instanceSupplier) {
 		this.instanceSupplier = instanceSupplier;
 	}

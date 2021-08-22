@@ -1,9 +1,10 @@
 package com.jiangning;
 
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.*;
 
 @Configuration
 @ComponentScan
+@EnableAspectJAutoProxy
+@Profile("dev")
 public class AppConfig {
 }

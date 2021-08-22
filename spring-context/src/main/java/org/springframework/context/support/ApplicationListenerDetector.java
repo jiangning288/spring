@@ -67,15 +67,21 @@ class ApplicationListenerDetector implements DestructionAwareBeanPostProcessor, 
 	}
 
 	@Override
+	// BeanPostProcessor 定义的方法，在每个bean创建时初始化之后应用
 	public Object postProcessAfterInitialization(Object bean, String beanName) {
+		// 检测到bean是一个 ApplicationListener 应用事件监听器
 		if (bean instanceof ApplicationListener) {
 			// potentially not detected as a listener by getBeanNamesForType retrieval
 			Boolean flag = this.singletonNames.get(beanName);
 			if (Boolean.TRUE.equals(flag)) {
 				// singleton bean (top-level or inner): register on the fly
+				// 如果当前 ApplicationListener bean scope 是 singleton 单例模式，
+				// 则将它注册到应用的事件多播器上
 				this.applicationContext.addApplicationListener((ApplicationListener<?>) bean);
 			}
 			else if (Boolean.FALSE.equals(flag)) {
+				// 如果当前 ApplicationListener bean scope 不是 singleton 单例模式，
+				// 则尝试输出警告日志，说明情况
 				if (logger.isWarnEnabled() && !this.applicationContext.containsBean(beanName)) {
 					// inner bean with other scope - can't reliably process events
 					logger.warn("Inner bean '" + beanName + "' implements ApplicationListener interface " +
@@ -89,10 +95,15 @@ class ApplicationListenerDetector implements DestructionAwareBeanPostProcessor, 
 		return bean;
 	}
 
+	// DestructionAwareBeanPostProcessor 接口定义的方法,
+	// 在 bean 销毁前被调用
 	@Override
 	public void postProcessBeforeDestruction(Object bean, String beanName) {
 		if (bean instanceof ApplicationListener) {
+			// 如果当前 bean 是一个 ApplicationListener 才执行这段逻辑
 			try {
+				// 当前  bean 是一个 ApplicationListener, 现在该bean即将销毁，
+				// 因此从应用上下文的事件多播器上将其移除
 				ApplicationEventMulticaster multicaster = this.applicationContext.getApplicationEventMulticaster();
 				multicaster.removeApplicationListener((ApplicationListener<?>) bean);
 				multicaster.removeApplicationListenerBean(beanName);
@@ -105,6 +116,9 @@ class ApplicationListenerDetector implements DestructionAwareBeanPostProcessor, 
 
 	@Override
 	public boolean requiresDestruction(Object bean) {
+		// 用于检测对于某个 bean 是否要调用 postProcessBeforeDestruction 方法
+		// 该实现表明仅在 bean 是一个 ApplicationListener 时才调用上面的
+		// postProcessBeforeDestruction
 		return (bean instanceof ApplicationListener);
 	}
 

@@ -41,6 +41,10 @@ import org.springframework.util.Assert;
  * @see org.springframework.core.type.StandardAnnotationMetadata
  */
 @SuppressWarnings("serial")
+/**
+ * 该类继承自 GenericBeanDefinition ，并实现了 AnnotatedBeanDefinition 接口。
+ * 这个 BeanDefinition 用来描述标注 @Configuration 注解的 Bean。
+ */
 public class AnnotatedGenericBeanDefinition extends GenericBeanDefinition implements AnnotatedBeanDefinition {
 
 	private final AnnotationMetadata metadata;

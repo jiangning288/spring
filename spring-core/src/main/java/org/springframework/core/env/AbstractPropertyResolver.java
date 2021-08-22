@@ -141,6 +141,11 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 		}
 	}
 
+	/**
+	 * spring容器初始化的时候，会从集合requiredProperties中取出所有key，
+	 * 然后获取这些key的环境变量（包括系统环境变量和进程环境变量），
+	 * 如果有一个key对应的环境变量为空，就会抛出异常，导致spring容器初始化失败；
+	 */
 	@Override
 	public void validateRequiredProperties() {
 		MissingRequiredPropertiesException ex = new MissingRequiredPropertiesException();

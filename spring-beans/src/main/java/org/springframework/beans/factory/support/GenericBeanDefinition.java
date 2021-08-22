@@ -36,7 +36,12 @@ import org.springframework.lang.Nullable;
  * @see RootBeanDefinition
  * @see ChildBeanDefinition
  */
-@SuppressWarnings("serial")
+
+/**
+ * GenericBeanDefinition 是 Spring 2.5 以后新引入的 BeanDefinition，
+ * 是 ChildBeanDefinition 更好的替代者，它同样可以通过 setParentName 方法设置父 BeanDefinition。
+ */
+
 public class GenericBeanDefinition extends AbstractBeanDefinition {
 
 	@Nullable
