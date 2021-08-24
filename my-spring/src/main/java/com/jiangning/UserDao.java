@@ -12,7 +12,6 @@ public class UserDao{
 	private ApplicationContext applicationContext;
 
 	public void print(){
-
 		System.out.println(applicationContext.getEnvironment());
 	}
 

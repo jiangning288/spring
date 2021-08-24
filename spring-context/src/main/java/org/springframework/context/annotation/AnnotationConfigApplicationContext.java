@@ -78,7 +78,7 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 
 	/**
 	 * 同意顾名思义，这是一个扫描器，扫描所有加了注解的bean
-	 *  同样是在构造方法中被实例化的
+	 * 同样是在构造方法中被实例化的
 	 */
 	private final ClassPathBeanDefinitionScanner scanner;
 

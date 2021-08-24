@@ -66,6 +66,18 @@ public class AnnotatedBeanDefinitionReader {
 	 * @see #AnnotatedBeanDefinitionReader(BeanDefinitionRegistry, Environment)
 	 * @see #setEnvironment(Environment)
 	 */
+
+	/**
+	 *  这里的BeanDefinitionRegistry registry是通过在AnnotationConfigApplicationContext
+	 *  的构造方法中传进来的this
+	 *  由此说明AnnotationConfigApplicationContext是一个BeanDefinitionRegistry类型的类
+	 *  何以证明我们可以看到AnnotationConfigApplicationContext的类关系：
+	 *  GenericApplicationContext extends AbstractApplicationContext implements BeanDefinitionRegistry
+	 *  看到他实现了BeanDefinitionRegistry证明上面的说法，那么BeanDefinitionRegistry的作用是什么呢？
+	 *  BeanDefinitionRegistry 顾名思义就是BeanDefinition的注册器
+	 *  那么何为BeanDefinition呢？参考BeanDefinition的源码的注释
+	 * @param registry
+	 */
 	public AnnotatedBeanDefinitionReader(BeanDefinitionRegistry registry) {
 		this(registry, getOrCreateEnvironment(registry));
 	}
@@ -84,6 +96,7 @@ public class AnnotatedBeanDefinitionReader {
 		Assert.notNull(environment, "Environment must not be null");
 		this.registry = registry;
 		this.conditionEvaluator = new ConditionEvaluator(registry, environment, null);
+		//注册ConfigProcessors（例如ConfigurationClassPostProcessor）委托模式
 		AnnotationConfigUtils.registerAnnotationConfigProcessors(this.registry);
 	}
 

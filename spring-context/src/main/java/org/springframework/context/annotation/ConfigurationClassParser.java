@@ -160,6 +160,11 @@ class ConfigurationClassParser {
 
 
 	public void parse(Set<BeanDefinitionHolder> configCandidates) {
+		//5.1之前在这里实例化 this.deferredImportSelectors = new LinkedList<>();
+		//5.1之后在DeferredImportSelectorHandler内部类里实例化
+		//有关DeferredImportSelector和ImportSelector，后面重点讲解！！
+
+		//根据BeanDefinition 的类型 做不同的处理,一般都会调用ConfigurationClassParser#parse 进行解析
 		for (BeanDefinitionHolder holder : configCandidates) {
 			BeanDefinition bd = holder.getBeanDefinition();
 			try {
@@ -181,7 +186,10 @@ class ConfigurationClassParser {
 						"Failed to parse configuration class [" + bd.getBeanClassName() + "]", ex);
 			}
 		}
-
+        //等@configuration处理完，最后再处理DeferredImportSelector的实现类
+		//执行 this.deferredImportSelectorHandler.process();
+		//将deferredImportSelector导入的类放入ConfigurationClassParser内部类ImportStack的属性：
+		//private final MultiValueMap<String, AnnotationMetadata> imports
 		this.deferredImportSelectorHandler.process();
 	}
 
@@ -688,7 +696,7 @@ class ConfigurationClassParser {
 
 	@SuppressWarnings("serial")
 	private static class ImportStack extends ArrayDeque<ConfigurationClass> implements ImportRegistry {
-
+		//ImportSelector 和 DeferredImportSelector 导入的类，全部放到ConfigurationClassParser内部类ImportStack的属性：
 		private final MultiValueMap<String, AnnotationMetadata> imports = new LinkedMultiValueMap<>();
 
 		public void registerImport(AnnotationMetadata importingClass, String importedClass) {
@@ -739,6 +747,7 @@ class ConfigurationClassParser {
 
 	private class DeferredImportSelectorHandler {
 
+		//但是放入时机不一样，DeferredImportSelector 首次导入时，存放到ConfigurationClassParser内部类DeferredImportSelectorHandler中的属性：
 		@Nullable
 		private List<DeferredImportSelectorHolder> deferredImportSelectors = new ArrayList<>();
 

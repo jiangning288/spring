@@ -42,6 +42,26 @@ import org.springframework.beans.BeansException;
  * @see BeanPostProcessor
  * @see PropertyResourceConfigurer
  */
+
+/**
+ * spring的扩展点之一
+ * 实现该接口，可以在spring的bean创建之前修改bean的定义属性。
+ * spring允许BeanFactoryPostProcessor在容器实例化任何其它bean之前读取配置元数据，
+ * 并可以根据需要进行修改，例如可以把bean的scope从singleton改为prototype，也可以把property的值给修改掉。
+ * 可以同时配置多个BeanFactoryPostProcessor，并通过设置'order'属性来控制各个BeanFactoryPostProcessor的执行次序。
+ * BeanFactoryPostProcessor是在spring容器加载了bean的定义文件之后，在bean实例化之前执行的
+ */
+
+/**
+ * BeanFactoryPostProcessor可以与bean definitions打交道，但是千万不要进行bean实例化
+ * （感觉这里应该说的是不要在BeanFactoryPostProcessor进行可能触发bean实例化的操作）。
+ * 这么做可能会导致bean被提前实例化，会破坏容器造成预估不到的副作用。如果你需要hack到bean实例化过程，请考虑使用BeanPostProcessor。
+ * 从doc中可以读到，BeanFactoryPostProcessor的主要作用是让你能接触到bean definitions，对bean definitions进行一定hack，但是也仅此而已了。
+ * 绝对不允许在BeanFactoryPostProcessor中触发到bean的实例化！！！
+ * 为啥呢，doc说得很清楚
+ * but never bean instances. Doing so may cause premature bean instantiation, violating the container and causing unintended side-effects.
+ * 可能导致的错误:使用注解进行依赖注入失败
+ */
 @FunctionalInterface
 public interface BeanFactoryPostProcessor {
 
