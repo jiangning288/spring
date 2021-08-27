@@ -97,8 +97,8 @@ abstract class ConfigurationClassUtils {
 		else if (beanDef instanceof AbstractBeanDefinition && ((AbstractBeanDefinition) beanDef).hasBeanClass()) {
 			// Check already loaded Class if present...
 			// since we possibly can't even load the class file for this Class.
-			//如果BeanDefinition 是 AbstractBeanDefinition的实例,并且beanDef 有 beanClass 属性存在
-			//则实例化StandardAnnotationMetadata
+			// 如果BeanDefinition 是 AbstractBeanDefinition的实例,并且beanDef 有 beanClass 属性存在
+			// 则实例化StandardAnnotationMetadata
 			Class<?> beanClass = ((AbstractBeanDefinition) beanDef).getBeanClass();
 			metadata = new StandardAnnotationMetadata(beanClass, true);
 		}
@@ -118,15 +118,14 @@ abstract class ConfigurationClassUtils {
         //【重点！】判断当前这个bd中存在的类是不是加了@Configruation注解
 		//如果存在则spring认为他是一个全注解的类
 		if (isFullConfigurationCandidate(metadata)) {
-			//如果存在Configuration 注解,则为BeanDefinition 设置configurationClass属性为full
+			//如果存在@Configuration 注解,则为BeanDefinition 设置configurationClass属性为full
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_FULL);
 		}
-		//【重点！】判断是否加了以下注解，摘录isLiteConfigurationCandidate的源码
-		//      candidateIndicators.add(Component.class.getName());
-		//		candidateIndicators.add(ComponentScan.class.getName());
-		//		candidateIndicators.add(Import.class.getName());
-		//		candidateIndicators.add(ImportResource.class.getName());
-		//如果不存在Configuration注解，spring则认为是一个部分注解类
+		//【重点！】如果没有加@Configruation注解，但有以下四个注解，spring则认为是一个部分注解类，则标识为lite，，
+		//      @Component、@ComponentScan、@Import、@ImportResource
+		// 如果以上四个类也没有，但里面有@bean方法，也认为是一个部分注解类，标识为lite。
+		// 这里有个判断逻辑，如果@Configuration注解，就不去判断以上5个条件了，因为会在解析@Configuration类的时候再解析
+		// spring就怕你没有加@Configuration注解，但是加了以上5个条件，所以要走else-if，再判断一下。
 		else if (isLiteConfigurationCandidate(metadata)) {
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_LITE);
 		}

@@ -228,7 +228,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 					"postProcessBeanFactory already called on this post-processor against " + registry);
 		}
 		this.registriesPostProcessed.add(registryId);
-		//执行扫描
+		//执行解析
 		processConfigBeanDefinitions(registry);
 	}
 
@@ -270,20 +270,13 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		for (String beanName : candidateNames) {
 			BeanDefinition beanDef = registry.getBeanDefinition(beanName);
 			//如果BeanDefinition中的configurationClass属性为full或者lite,则意味着已经处理过了,直接跳过
-			//这里需要结合下面的代码才能理解
-			//【重点！】Full 或者 Lite
 			if (ConfigurationClassUtils.isFullConfigurationClass(beanDef) ||
 					ConfigurationClassUtils.isLiteConfigurationClass(beanDef)) {
 				if (logger.isDebugEnabled()) {
 					logger.debug("Bean definition has already been processed as a configuration class: " + beanDef);
 				}
 			}
-			//【重点！】判断是否是Configuration类，如果加了@Configuration下面的这几个注解就不再判断了
-			// 还有 candidateIndicators.add(Component.class.getName());
-			//		candidateIndicators.add(ComponentScan.class.getName());
-			//		candidateIndicators.add(Import.class.getName());
-			//		candidateIndicators.add(ImportResource.class.getName());
-			//      beanDef == appconfig
+			//【重点！】判断是否是Configuration类（full or lite）
 			else if (ConfigurationClassUtils.checkConfigurationClassCandidate(beanDef, this.metadataReaderFactory)) {
 				//BeanDefinitionHolder 也可以看成一个数据结构
 				configCandidates.add(new BeanDefinitionHolder(beanDef, beanName));
@@ -291,6 +284,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		}
 
 		// Return immediately if no @Configuration classes were found
+		// 如果没有找到@Configuration classes，则直接返回
 		if (configCandidates.isEmpty()) {
 			return;
 		}
@@ -322,6 +316,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			}
 		}
 
+		//web应用为StandardServletEnvironment
 		if (this.environment == null) {
 			this.environment = new StandardEnvironment();
 		}
@@ -334,9 +329,10 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 
 		//实例化2个set,candidates用于将之前加入的configCandidates进行去重
 		//因为可能有多个配置类重复了
-		//alreadyParsed用于判断是否处理过
 		Set<BeanDefinitionHolder> candidates = new LinkedHashSet<>(configCandidates);
+		//alreadyParsed用于判断是否处理过
 		Set<ConfigurationClass> alreadyParsed = new HashSet<>(configCandidates.size());
+		//循环解析，直到candidates为空
 		do {
 			//【重要！！！】parse解析
 			parser.parse(candidates);
@@ -355,6 +351,10 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			alreadyParsed.addAll(configClasses);
 
 			candidates.clear();
+
+			//由于我们这里进行了扫描，把扫描出来的BeanDefinition注册给了factory
+			//再次获取容器中bean定义数量  如果大于 之前获取的bean定义数量，则说明有新的bean注册到容器中，需要再次解析
+			//getBeanDefinitionCount()取得是registry.beanDefinitionMap.size()
 			if (registry.getBeanDefinitionCount() > candidateNames.length) {
 				String[] newCandidateNames = registry.getBeanDefinitionNames();
 				Set<String> oldCandidateNames = new HashSet<>(Arrays.asList(candidateNames));
