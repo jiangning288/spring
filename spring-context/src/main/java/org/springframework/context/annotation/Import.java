@@ -48,6 +48,13 @@ import java.lang.annotation.Target;
  * @see ImportSelector
  * @see ImportResource
  */
+/**
+ * 可以导入一个或多个组件类（通常是@Configuration配置类）
+ * 该注解的功能与Spring XML中的<import/>元素相同。可以导入@Configuration配置类、ImportSelect和ImportBeanDefinitionRegistrar的实现类。
+ * 从4.2版本开始，还可以引用常规组件类（普通类），该功能类似于AnnotationConfigApplicationContext.register方法。
+ * 该注解可以在类中声明，也可以在元注解中声明。
+ * 如果需要导入XML或其他非@Configuration定义的资源，可以使用@ImportResource注释。
+ */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
@@ -57,6 +64,7 @@ public @interface Import {
 	 * {@link Configuration}, {@link ImportSelector}, {@link ImportBeanDefinitionRegistrar}
 	 * or regular component classes to import.
 	 */
+	//只有一个默认的value属性，该属性类型为Class<?>[]，表示可以传入一个或多个Class对象。
 	Class<?>[] value();
 
 }

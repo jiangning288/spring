@@ -195,7 +195,7 @@ public abstract class AnnotationConfigUtils {
 		//AutowiredAnnotationBeanPostProcessor 实现了 MergedBeanDefinitionPostProcessor
 		//MergedBeanDefinitionPostProcessor 最终实现了 BeanPostProcessor
 		/**
-		 * 注册处理@Autowired 注解的处理器AutowiredAnnotationBeanPostProcessor
+		 * 注册处理@Autowired、@Value、@Inject相关注解的处理器AutowiredAnnotationBeanPostProcessor
 		 * org.springframework.context.annotation.internalAutowiredAnnotationProcessor
 		 */
 		if (!registry.containsBeanDefinition(AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME)) {
@@ -213,6 +213,7 @@ public abstract class AnnotationConfigUtils {
 
 		/**
 		 * 注册处理JSR规范的注解处理器CommonAnnotationBeanPostProcessor
+		 * 在支持JSR-250条件下注册javax.annotation包下注解处理器，包括@PostConstruct、@PreDestroy、@Resource注解等
 		 * org.springframework.context.annotation.internalCommonAnnotationProcessor
 		 */
 		// Check for JSR-250 support, and if present add the CommonAnnotationBeanPostProcessor.
@@ -242,6 +243,7 @@ public abstract class AnnotationConfigUtils {
 
 		/**
 		 * 处理监听方法的注解解析器EventListenerMethodProcessor
+		 * 增加@EventListener相关处理器
 		 */
 		if (!registry.containsBeanDefinition(EVENT_LISTENER_PROCESSOR_BEAN_NAME)) {
 			RootBeanDefinition def = new RootBeanDefinition(EventListenerMethodProcessor.class);

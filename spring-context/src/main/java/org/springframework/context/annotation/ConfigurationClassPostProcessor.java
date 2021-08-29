@@ -249,8 +249,10 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			// Simply call processConfigurationClasses lazily at this point then.
 			processConfigBeanDefinitions((BeanDefinitionRegistry) beanFactory);
 		}
-
+		//给配置类产生cglib代理。加了@Configuration注解的，使得Appconfig类中的new instance()方法之被执行一次！
 		enhanceConfigurationClasses(beanFactory);
+		//除了产生了一次 cglib 代理外, 还向容器中注册了一个后置处理器: ImportAwareBeanPostProcessor
+		//创建 ImportAwareBeanPostProcessor ,来支持 ImportAware ,调用ImportAware.setImportMetadata方法
 		beanFactory.addBeanPostProcessor(new ImportAwareBeanPostProcessor(beanFactory));
 	}
 
@@ -336,8 +338,8 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		do {
 			//【重要！！！】parse解析
 			parser.parse(candidates);
+			//主要校验配置类不能使用final修饰符（CGLIB代理是生成一个子类，因此原先的类不能使用final修饰）
 			parser.validate();
-
 			Set<ConfigurationClass> configClasses = new LinkedHashSet<>(parser.getConfigurationClasses());
 			configClasses.removeAll(alreadyParsed);
 
@@ -347,9 +349,17 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 						registry, this.sourceExtractor, this.resourceLoader, this.environment,
 						this.importBeanNameGenerator, parser.getImportRegistry());
 			}
+
+			/**
+			 * 这里值得注意的是扫描出来的bean当中可能包含了特殊类
+			 * 比如ImportBeanDefinitionRegistrar那么也在这个方法里面处理
+			 * 但是并不是包含在configClasses当中
+			 * configClasses当中主要包含的是importSelector
+			 * 因为ImportBeanDefinitionRegistrar在扫描出来的时候已经被添加到一个list当中去了
+			 */
+			//注册bd 到 map （不包括普通的bd）
 			this.reader.loadBeanDefinitions(configClasses);
 			alreadyParsed.addAll(configClasses);
-
 			candidates.clear();
 
 			//由于我们这里进行了扫描，把扫描出来的BeanDefinition注册给了factory
@@ -377,6 +387,8 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		while (!candidates.isEmpty());
 
 		// Register the ImportRegistry as a bean in order to support ImportAware @Configuration classes
+		//ImportStack记录了哪些配置类通过@Import(看ImportSelector,ImportBeanDefinitionRegistrar接口)导入了哪些类
+		//后面通过ImportAwareBeanPostProcessor的功能实现了ImportAware接口的配置类可以得到导入类的注解属性
 		if (sbr != null && !sbr.containsSingleton(IMPORT_REGISTRY_BEAN_NAME)) {
 			sbr.registerSingleton(IMPORT_REGISTRY_BEAN_NAME, parser.getImportRegistry());
 		}
@@ -398,17 +410,21 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		Map<String, AbstractBeanDefinition> configBeanDefs = new LinkedHashMap<>();
 		for (String beanName : beanFactory.getBeanDefinitionNames()) {
 			BeanDefinition beanDef = beanFactory.getBeanDefinition(beanName);
+			//判断是否是一个全注解类
+			//扫描是全注解类？full和lite的关系
 			if (ConfigurationClassUtils.isFullConfigurationClass(beanDef)) {
 				if (!(beanDef instanceof AbstractBeanDefinition)) {
 					throw new BeanDefinitionStoreException("Cannot enhance @Configuration bean definition '" +
 							beanName + "' since it is not stored in an AbstractBeanDefinition subclass");
 				}
 				else if (logger.isInfoEnabled() && beanFactory.containsSingleton(beanName)) {
+					// mybatis中的一个坑就是在这个地方！
 					logger.info("Cannot enhance @Configuration bean definition '" + beanName +
 							"' since its singleton instance has been created too early. The typical cause " +
 							"is a non-static @Bean method with a BeanDefinitionRegistryPostProcessor " +
 							"return type: Consider declaring such methods as 'static'.");
 				}
+				//如果是FullConfigurationClass,则放到变量configBeanDefs中
 				configBeanDefs.put(beanName, (AbstractBeanDefinition) beanDef);
 			}
 		}
@@ -416,7 +432,10 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			// nothing to enhance -> return immediately
 			return;
 		}
-
+		//增强的方式有3种：
+		//1. BeanMethodInterceptor
+		//2. BeanFactoryAwareMethodInterceptor
+		//3. NoOp.INSTANCE(什么都不处理)
 		ConfigurationClassEnhancer enhancer = new ConfigurationClassEnhancer();
 		for (Map.Entry<String, AbstractBeanDefinition> entry : configBeanDefs.entrySet()) {
 			AbstractBeanDefinition beanDef = entry.getValue();
@@ -426,6 +445,9 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 				// Set enhanced subclass of the user-specified bean class
 				Class<?> configClass = beanDef.resolveBeanClass(this.beanClassLoader);
 				if (configClass != null) {
+					//enhance()完成对全注解类的cglib代理
+					//【注】输出增强类class文件：我们可以通过如下配置来获取Spring为我们生成的CGLIB代理增强类的class文件
+					//System.setProperty(DebuggingClassWriter.DEBUG_LOCATION_PROPERTY, "my-spring/docs/classes");
 					Class<?> enhancedClass = enhancer.enhance(configClass, this.beanClassLoader);
 					if (configClass != enhancedClass) {
 						if (logger.isTraceEnabled()) {
