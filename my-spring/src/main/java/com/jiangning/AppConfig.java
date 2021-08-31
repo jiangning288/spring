@@ -8,7 +8,7 @@ import org.springframework.context.annotation.*;
 public class AppConfig {
 
 	@Bean
-	public Hello hello(){
+	public static Hello hello(){
 		return new Hello();
 	}
 
@@ -17,11 +17,11 @@ public class AppConfig {
 		return new IndexDao();
 	}
 
-	@Bean
-	public static Test test(){
-		return new Test();
-	}
-
+//	@Bean
+//	public static Test test(){
+//		return new Test();
+//	}
+//
 
 
 }

@@ -249,10 +249,21 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			// Simply call processConfigurationClasses lazily at this point then.
 			processConfigBeanDefinitions((BeanDefinitionRegistry) beanFactory);
 		}
-		//给配置类产生cglib代理。加了@Configuration注解的，使得Appconfig类中的new instance()方法之被执行一次！
+		//【重要！！！】给配置类产生cglib代理。加了@Configuration注解的，使得Appconfig类中的new instance()方法之被执行一次！
 		enhanceConfigurationClasses(beanFactory);
-		//除了产生了一次 cglib 代理外, 还向容器中注册了一个后置处理器: ImportAwareBeanPostProcessor
-		//创建 ImportAwareBeanPostProcessor ,来支持 ImportAware ,调用ImportAware.setImportMetadata方法
+
+		/**
+		 * 除了产生了一次 cglib 代理外, 还向容器中注册了一个后置处理器: ImportAwareBeanPostProcessor
+		 * 这里的后处理器的作用
+		 * （1）给实现了EnhancedConfiguration接口的bean设置BeanFactory对象
+		 *  如果是全注解Bean，生成的代理Class都实现了EnhancedConfiguration接口
+		 * set方法在
+		 * org.springframework.context.annotation.ConfigurationClassPostProcessor.ImportAwareBeanPostProcessor#postProcessProperties()
+		 * 被回调，见populateBean（）方法
+		 * （2）来支持 ImportAware ,调用ImportAware.setImportMetadata方法
+		 *  @Import(Configuration.class)
+		 *  让该Configuration类实现ImportAware
+		 */
 		beanFactory.addBeanPostProcessor(new ImportAwareBeanPostProcessor(beanFactory));
 	}
 
@@ -454,6 +465,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 							logger.trace(String.format("Replacing bean definition '%s' existing class '%s' with " +
 									"enhanced class '%s'", entry.getKey(), configClass.getName(), enhancedClass.getName()));
 						}
+						//注册BeanClass为cglib代理过的类
 						beanDef.setBeanClass(enhancedClass);
 					}
 				}
@@ -477,6 +489,8 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		public PropertyValues postProcessProperties(@Nullable PropertyValues pvs, Object bean, String beanName) {
 			// Inject the BeanFactory before AutowiredAnnotationBeanPostProcessor's
 			// postProcessProperties method attempts to autowire other configuration beans.
+			// 判断bean是不是实现了EnhancedConfiguration接口，如果实现了就调用setBeanFactory方法，
+			// 这样也就和前面说的为什么要实现这个接口的原因呼应上了
 			if (bean instanceof EnhancedConfiguration) {
 				((EnhancedConfiguration) bean).setBeanFactory(this.beanFactory);
 			}

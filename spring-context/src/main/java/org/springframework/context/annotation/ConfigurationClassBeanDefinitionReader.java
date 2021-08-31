@@ -235,11 +235,11 @@ class ConfigurationClassBeanDefinitionReader {
 		if (metadata.isStatic()) {
 			// static @Bean method
 			// static时, 设置的是 BeanClassName 属性
-			beanDef.setBeanClassName(configClass.getMetadata().getClassName());
+			beanDef.setBeanClassName(configClass.getMetadata().getClassName());//直接设置他的BeanClassName为AppConfig
 			beanDef.setFactoryMethodName(methodName);
 		}
 		else {
-			//非static的 method, 设置了一个 FactoryBeanName 属性，设置的是factorybean,后面进入代理
+			//非static的 method, 设置了一个 FactoryBeanName 属性，设置的是factorybean（例如Appconfig）,后面进入代理
 			// instance @Bean method
 			beanDef.setFactoryBeanName(configClass.getBeanName());
 			beanDef.setUniqueFactoryMethodName(methodName);

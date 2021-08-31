@@ -1383,11 +1383,20 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			for (BeanPostProcessor bp : getBeanPostProcessors()) {
 				if (bp instanceof InstantiationAwareBeanPostProcessor) {
 					InstantiationAwareBeanPostProcessor ibp = (InstantiationAwareBeanPostProcessor) bp;
+					/**
+					 * 在这里通过bean的后置处理器去完成依赖注入
+					 * 如果使用的是@Autowried进行注入的时候，使用的是 {@link AutowiredAnnotationBeanPostProcessor} 进行属性的注入
+					 * @see org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor
+					 * 如果使用的xml配置的，那么就使用的是 CommonAnnotationBeanPostProcessor 进行属性的注入
+					 * @see org.springframework.context.annotation.CommonAnnotationBeanPostProcessor
+					 * 注意。这里有一个ConfigurationClassPostProcessor中的内部类ImportAwareBeanPostProcessor，作用是为cglib代理的配置类注入beanfactory
+					 */
 					PropertyValues pvsToUse = ibp.postProcessProperties(pvs, bw.getWrappedInstance(), beanName);
 					if (pvsToUse == null) {
 						if (filteredPds == null) {
 							filteredPds = filterPropertyDescriptorsForDependencyCheck(bw, mbd.allowCaching);
 						}
+						//自动注入
 						pvsToUse = ibp.postProcessPropertyValues(pvs, filteredPds, bw.getWrappedInstance(), beanName);
 						if (pvsToUse == null) {
 							return;
