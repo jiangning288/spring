@@ -51,6 +51,7 @@ import org.springframework.core.type.AnnotationMetadata;
  * EnvironmentAware， BeanFactoryAware ，BeanClassLoaderAware或者ResourceLoaderAware，
  * 那么在调用其selectImports方法之前先调用上述接口中对应的方法，
  * 如果需要在所有的@Configuration处理完在导入时可以实现DeferredImportSelector接口。
+ *
  */
 public interface ImportSelector {
 

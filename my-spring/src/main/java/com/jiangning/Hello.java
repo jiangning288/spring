@@ -1,5 +1,7 @@
 package com.jiangning;
 
+import org.springframework.context.annotation.DeferredImportSelector;
+import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.stereotype.Component;
 
 /**
@@ -13,4 +15,6 @@ public class Hello {
 	public Hello(){
 		System.out.println("hello");
 	}
+
+
 }
