@@ -77,6 +77,9 @@ class ApplicationListenerDetector implements DestructionAwareBeanPostProcessor, 
 				// singleton bean (top-level or inner): register on the fly
 				// 如果当前 ApplicationListener bean scope 是 singleton 单例模式，
 				// 将实现了ApplicationListener接口的bean注册到事件发布器applicationEventMulticaster中
+				// 注意看addApplicationListener()方法，是注册到事件发布器applicationEventMulticaster中
+				// 那么为什么前面registerListeners已经解析过了，为什么还要进行解析？
+				// 为了防止漏网之鱼；比如Bean是个懒加载@Lazy注解，在registerListeners方法是解析不到的。
 				this.applicationContext.addApplicationListener((ApplicationListener<?>) bean);
 			}
 			else if (Boolean.FALSE.equals(flag)) {

@@ -52,11 +52,14 @@ public abstract class UiApplicationContextUtils {
 	 * @param context current application context
 	 * @return the initialized theme source (will never be {@code null})
 	 * @see #THEME_SOURCE_BEAN_NAME
+	 * 为给定的application context初始化ThemeSource,自动检测一个名字为"themeSource"的bean。 如果没有这样的bean被找到,一个默认的空ThemeSource被使用
 	 */
 	public static ThemeSource initThemeSource(ApplicationContext context) {
+		// 判断是否存在名字为“ThemeSource”的bean
 		if (context.containsLocalBean(THEME_SOURCE_BEAN_NAME)) {
 			ThemeSource themeSource = context.getBean(THEME_SOURCE_BEAN_NAME, ThemeSource.class);
 			// Make ThemeSource aware of parent ThemeSource.
+			// 如果存在，判断父context是否实现了ThemeSource接口,这个context是否实现了HierarchicalThemeSource接口.如果全部符合,设置父ThemeSource。
 			if (context.getParent() instanceof ThemeSource && themeSource instanceof HierarchicalThemeSource) {
 				HierarchicalThemeSource hts = (HierarchicalThemeSource) themeSource;
 				if (hts.getParentThemeSource() == null) {
@@ -73,6 +76,7 @@ public abstract class UiApplicationContextUtils {
 		else {
 			// Use default ThemeSource to be able to accept getTheme calls, either
 			// delegating to parent context's default or to local ResourceBundleThemeSource.
+			// 如果不存在，设置判断父context是否实现了ThemeSource接口，如果实现了则实例化DelegatingThemeSource并且设置父ThemeSource。如果没有实现实例化ResourceBundleThemeSource。
 			HierarchicalThemeSource themeSource = null;
 			if (context.getParent() instanceof ThemeSource) {
 				themeSource = new DelegatingThemeSource();

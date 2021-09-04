@@ -938,6 +938,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * @throws BeansException in case of errors
 	 * @see #refresh()
 	 */
+	// 在实例化单例之前,调用初始化特殊bean
+	// 默认是空实现，在AnnotationApplicationContext上下文中没有实现，可能在spring后面的版本会去扩展。
+	// 在Web中有实现
 	protected void onRefresh() throws BeansException {
 		// For subclasses: do nothing by default.
 	}
