@@ -24,6 +24,17 @@ import java.util.EventObject;
  *
  * @author Rod Johnson
  * @author Juergen Hoeller
+ *
+ * Spring的Application事件：
+ * 1。ContextRefreshedContext：
+ *    当容器被实例化或refreshed时发布。如调用refresh()方法,此处的实例化是指所有的bean都已被加载后置处理器都被激活，所有单例bean都已被实例化所有的容器对象都已准备好
+ *    可使用如果容器支持热重载则refresh可以被触发多次(XmlWebApplicatonContext支持热刷新而 GenericApplicationContext则不支持)
+ * 2。ContextStartedEvent:当容器启动时发布,即调用start()方法,已启用意味着所有的Lifecycle bean都已显式接收到了start信号
+ * 3。ContextStoppedEvent:当容器停止时发布,即调用stop0()方法,即所有的Lifecycle bean都已显式接收到了stop信号，关闭的容器可以通过start()方法重启
+ * 4。ContextClosedEvent：当容器关闭时发布，即调用close()方法,关闭意味着所有的单例bean都已被销毁关闭的容器不能被重启或refresh()
+ * 5。RequestHandledEvent：这只在使用spring的DispatcherServlet时有效,当一个请求被处理完成时发布
+ * 6。自定义事件：继承ApplicationEvent
+ *
  */
 public abstract class ApplicationEvent extends EventObject {
 

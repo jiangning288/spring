@@ -304,7 +304,8 @@ public abstract class AsyncExecutionAspectSupport implements BeanFactoryAware {
 	 * @param method the method that was invoked
 	 * @param params the parameters used to invoke the method
 	 */
-	protected void handleError(Throwable ex, Method method, Object... params) throws Exception {
+	//原来是protected，为了不显示报错，才改的，用aspcetJ编译不会报错
+	public void handleError(Throwable ex, Method method, Object... params) throws Exception {
 		if (Future.class.isAssignableFrom(method.getReturnType())) {
 			ReflectionUtils.rethrowException(ex);
 		}

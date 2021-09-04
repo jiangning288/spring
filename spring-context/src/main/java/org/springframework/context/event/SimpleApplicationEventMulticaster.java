@@ -129,13 +129,21 @@ public class SimpleApplicationEventMulticaster extends AbstractApplicationEventM
 
 	@Override
 	public void multicastEvent(final ApplicationEvent event, @Nullable ResolvableType eventType) {
+		// 再去通过event去获得一个ResolvableType ——> 获取事件类型
 		ResolvableType type = (eventType != null ? eventType : resolveDefaultEventType(event));
+		// 通过事件及类型进行获取事件监听器进行遍历 ——> 遍历所有和事件匹配的事件监听器 getApplicationListeners()
 		for (final ApplicationListener<?> listener : getApplicationListeners(event, type)) {
 			Executor executor = getTaskExecutor();
+			// 当 executor 不为空，这里走的是异步事件
+			// Spring提供的事件机制，默认是同步的。如果想用异步的，可以自己实现ApplicationEventMulticaster接口，并在Spring容器中注册id为applicationEventMulticaster的Bean。
+			// 默认情况下容器不会为用户创建执行器实例,因而对监听器的回调是同步进行的,即所有监听器的监听方法都在推送事件的线程中被执行,通常这也是处理业务逻辑的线程,若其中一个监听器回调执行
+			// 阻塞,则会阻塞整个业务处理的线程,造成严重的后果。
+			// 而异步回调的方式,虽然不会导致业务处理线程被阻塞,但是不能共享一些业务线程的上下文资源,比如类加载器,事务等等。因而究竟选择哪种回调方式,要视具体业务场景而定。
 			if (executor != null) {
 				executor.execute(() -> invokeListener(listener, event));
 			}
 			else {
+				// 同步事件
 				invokeListener(listener, event);
 			}
 		}
@@ -169,6 +177,7 @@ public class SimpleApplicationEventMulticaster extends AbstractApplicationEventM
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	private void doInvokeListener(ApplicationListener listener, ApplicationEvent event) {
 		try {
+			//回调onApplicationEvent方法
 			listener.onApplicationEvent(event);
 		}
 		catch (ClassCastException ex) {

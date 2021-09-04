@@ -72,6 +72,12 @@ public class GenericApplicationListenerAdapter implements GenericApplicationList
 			return (eventClass != null && ((SmartApplicationListener) this.delegate).supportsEventType(eventClass));
 		}
 		else {
+			//因为我们的监听器实例通常都不是SmartApplicationListener类型
+			//看判断条件的后面一部分declaredEventType是监听器泛型的实际类型,而eventType是发布的事件的类型
+			//declaredEventType.isAssignableFrom(eventType)当以下两种情况返回true
+			//1.declaredEventType和eventType类型相同
+			//2.declaredEventType是eventType的父类型
+			//只要监听器泛型的实际类型和发布的事件类型一样或是它的父类型,则该监听器将被成功匹配。
 			return (this.declaredEventType == null || this.declaredEventType.isAssignableFrom(eventType));
 		}
 	}

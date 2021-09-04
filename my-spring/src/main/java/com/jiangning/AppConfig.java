@@ -1,27 +1,22 @@
 package com.jiangning;
 
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.*;
+import org.springframework.context.support.ResourceBundleMessageSource;
 
 @Configuration
 @ComponentScan("com.jiangning")
-//@Import(MyImportSelector.class)
 public class AppConfig {
 
-	@Bean
-	public static Hello hello(){
-		return new Hello();
+	@Bean(name = "messageSource")
+	public MessageSource getMessageSource() {
+		ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
+		messageSource.setDefaultEncoding("UTF-8");
+		messageSource.addBasenames("message", "message_en");
+		return messageSource;
+
 	}
 
-	@Bean
-	public  IndexDao indexDao() {
-		return new IndexDao();
-	}
-
-//	@Bean
-//	public static Test test(){
-//		return new Test();
-//	}
-//
 
 
 }
