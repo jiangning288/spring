@@ -74,7 +74,8 @@ class ComponentScanAnnotationParser {
 
 
 	public Set<BeanDefinitionHolder> parse(AnnotationAttributes componentScan, final String declaringClass) {
-		//这个类是实际扫描类的逻辑类
+		// 这个类是实际扫描类的逻辑类
+		// new了一个ClassPathBeanDefinitionScanner，来进行扫描
 		ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(this.registry,
 				componentScan.getBoolean("useDefaultFilters"), this.environment, this.resourceLoader);
 		//以下的就是将componentScan中的属性值，赋值给ClassPathBeanDefinitionScanner
@@ -128,7 +129,7 @@ class ComponentScanAnnotationParser {
 		if (basePackages.isEmpty()) {
 			basePackages.add(ClassUtils.getPackageName(declaringClass));
 		}
-
+		//添加一个ExcludeFilter
 		scanner.addExcludeFilter(new AbstractTypeHierarchyTraversingFilter(false, false) {
 			@Override
 			protected boolean matchClassName(String className) {

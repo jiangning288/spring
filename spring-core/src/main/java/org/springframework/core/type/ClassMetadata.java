@@ -32,11 +32,13 @@ public interface ClassMetadata {
 
 	/**
 	 * Return the name of the underlying class.
+	 * 获取该类类名
 	 */
 	String getClassName();
 
 	/**
 	 * Return whether the underlying class represents an interface.
+	 * 是否为接口
 	 */
 	boolean isInterface();
 
@@ -54,6 +56,7 @@ public interface ClassMetadata {
 	/**
 	 * Return whether the underlying class represents a concrete class,
 	 * i.e. neither an interface nor an abstract class.
+	 * 是否为实现类 （不能是接口和抽象类）
 	 */
 	boolean isConcrete();
 
@@ -66,6 +69,8 @@ public interface ClassMetadata {
 	 * Determine whether the underlying class is independent, i.e. whether
 	 * it is a top-level class or a nested class (static inner class) that
 	 * can be constructed independently from an enclosing class.
+	 * 要么是顶层class，要么是被嵌套的class（静态内部类）,
+	 * 但是被嵌套的class必须能够从封闭的class中独立构造，才能说明此class是独立的
 	 */
 	boolean isIndependent();
 

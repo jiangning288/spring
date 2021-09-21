@@ -163,6 +163,7 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 		this.registry = registry;
 
 		if (useDefaultFilters) {
+			//设置includeFilters初始值
 			registerDefaultFilters();
 		}
 		setEnvironment(environment);
@@ -273,7 +274,7 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 		Set<BeanDefinitionHolder> beanDefinitions = new LinkedHashSet<>();
 		//扫描basePackage路径下的java文件
 		for (String basePackage : basePackages) {
-			//调用父类ClassPathScanningCandidateComponentProvider中的findCandidateComponents方法
+			// 调用父类ClassPathScanningCandidateComponentProvider中的findCandidateComponents方法
 			// 符合条件的并把它转成BeanDefinition类型
 			Set<BeanDefinition> candidates = findCandidateComponents(basePackage);
 			for (BeanDefinition candidate : candidates) {
@@ -281,17 +282,17 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 				ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(candidate);
 				//设置scpoe
 				candidate.setScope(scopeMetadata.getScopeName());
-				//为bean生成名称
+				//为bean生成名称（AnnotatedBeanDefinition的默认名称生成规则）
 				String beanName = this.beanNameGenerator.generateBeanName(candidate, this.registry);
 				//如果这个类是AbstractBeanDefinition的子类
-				//则为他设置默认值，比如lazy，init destory
 				if (candidate instanceof AbstractBeanDefinition) {
+					//则为他设置默认值，比如lazy，init，Destroy等以及自动注入的候选者
 					postProcessBeanDefinition((AbstractBeanDefinition) candidate, beanName);
 				}
 				//检查并且处理常用的注解
-				//这里的处理主要是指把常用注解的值设置到AnnotatedBeanDefinition当中
-				//当前前提是这个类必须是AnnotatedBeanDefinition类型的，说白了就是加了注解的类
+				//前提是这个类必须是AnnotatedBeanDefinition类型的，说白了就是加了注解的类
 				if (candidate instanceof AnnotatedBeanDefinition) {
+					//这里的处理主要是指把常用注解的值设置到AnnotatedBeanDefinition当中，Lazy，Primary等等
 					AnnotationConfigUtils.processCommonDefinitionAnnotations((AnnotatedBeanDefinition) candidate);
 				}
 				//根据bean名称检查指定的bean是否需要在容器中注册，或者是否在容器中存在冲突

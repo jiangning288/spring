@@ -204,8 +204,10 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	 */
 	@SuppressWarnings("unchecked")
 	protected void registerDefaultFilters() {
+		//扫描带有@Component的
 		this.includeFilters.add(new AnnotationTypeFilter(Component.class));
 		ClassLoader cl = ClassPathScanningCandidateComponentProvider.class.getClassLoader();
+		//扫描带有@ManagedBean的
 		try {
 			this.includeFilters.add(new AnnotationTypeFilter(
 					((Class<? extends Annotation>) ClassUtils.forName("javax.annotation.ManagedBean", cl)), false));
@@ -214,6 +216,8 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 		catch (ClassNotFoundException ex) {
 			// JSR-250 1.1 API (as included in Java EE 6) not available - simply skip.
 		}
+		//扫描带有@Named的
+		//但是这里没有相关jar包，所以没有javax.inject.Named这个类，抛出异常，空捕获跳出
 		try {
 			this.includeFilters.add(new AnnotationTypeFilter(
 					((Class<? extends Annotation>) ClassUtils.forName("javax.inject.Named", cl)), false));
@@ -414,48 +418,72 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	}
 
 	private Set<BeanDefinition> scanCandidateComponents(String basePackage) {
+		// 创建Bean定义容器
 		Set<BeanDefinition> candidates = new LinkedHashSet<>();
 		try {
+			// 基于给定的包路径组装成检索的路径：
+			// 1. 将包路径分隔符替换成文件系统分隔符
+			// 2. 加上资源解析模式前缀"classpath*:"
+			// 3. 加上资源模式后缀"**/*.class"，用于表示路径层次和要检测的文件类型为.class
 			String packageSearchPath = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX +
 					resolveBasePackage(basePackage) + '/' + this.resourcePattern;
+			// 将包下的所有class文件用Resource的方式描述（处理流程很复杂）
+			// Resource--资源描述符
+			// 主要是将packageSearchPath分成classpath，包名，后缀名三部分进行处理，
+			// 又根据有无*或者?等表达式，处理方式有所不同
 			Resource[] resources = getResourcePatternResolver().getResources(packageSearchPath);
 			boolean traceEnabled = logger.isTraceEnabled();
 			boolean debugEnabled = logger.isDebugEnabled();
+			// 遍历每个资源
 			for (Resource resource : resources) {
 				if (traceEnabled) {
 					logger.trace("Scanning " + resource);
 				}
+				// 如果资源是可读
 				if (resource.isReadable()) {
 					try {
+						// 这里使用工厂模式获取该资源的元数据阅读器(MetadataReader)
+						// 这个metadataReader包含class文件中，类上的注解，方法的注解，所使用注解的元注解等描述
+						// 在获取metadataReader的同时，在CachingMetadataReaderFactory类的metadataReaderCache属性中存放了一份。此属性是LinkedHashMap
 						MetadataReader metadataReader = getMetadataReaderFactory().getMetadataReader(resource);
+						// 判断metadataReader能否通过注解类型过滤器过滤
 						if (isCandidateComponent(metadataReader)) {
+							// 构造ScannedGenericBeanDefinition类型的Bean定义
 							ScannedGenericBeanDefinition sbd = new ScannedGenericBeanDefinition(metadataReader);
+							// 取得资源描述符的引用
 							sbd.setResource(resource);
 							sbd.setSource(resource);
+							// 判断是否符合条件
+							// 1. 需要满足是非抽象类；2. 需要满足是顶级的无依赖类（即非嵌套的内部类）
 							if (isCandidateComponent(sbd)) {
 								if (debugEnabled) {
+									//确定候选组件class
 									logger.debug("Identified candidate component class: " + resource);
 								}
 								candidates.add(sbd);
 							}
 							else {
 								if (debugEnabled) {
+									//被忽略，不是一个具体的顶层class
 									logger.debug("Ignored because not a concrete top-level class: " + resource);
 								}
 							}
 						}
 						else {
 							if (traceEnabled) {
+								//被忽略，不匹配任何过滤器
 								logger.trace("Ignored because not matching any filter: " + resource);
 							}
 						}
 					}
 					catch (Throwable ex) {
+						//失败读取候选组件
 						throw new BeanDefinitionStoreException(
 								"Failed to read candidate component class: " + resource, ex);
 					}
 				}
 				else {
+					//不可读，忽略
 					if (traceEnabled) {
 						logger.trace("Ignored because not readable: " + resource);
 					}
@@ -463,6 +491,7 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 			}
 		}
 		catch (IOException ex) {
+			//扫描类路径时IO异常
 			throw new BeanDefinitionStoreException("I/O failure during classpath scanning", ex);
 		}
 		return candidates;
@@ -488,13 +517,16 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	 * @return whether the class qualifies as a candidate component
 	 */
 	protected boolean isCandidateComponent(MetadataReader metadataReader) throws IOException {
+		// excludeFilter过滤
 		for (TypeFilter tf : this.excludeFilters) {
 			if (tf.match(metadataReader, getMetadataReaderFactory())) {
 				return false;
 			}
 		}
+		// includeFilter过滤
 		for (TypeFilter tf : this.includeFilters) {
 			if (tf.match(metadataReader, getMetadataReaderFactory())) {
+				// @Conditional注解解析和判断
 				return isConditionMatch(metadataReader);
 			}
 		}

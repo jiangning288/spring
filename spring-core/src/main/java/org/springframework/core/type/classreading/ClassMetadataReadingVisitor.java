@@ -177,6 +177,7 @@ class ClassMetadataReadingVisitor extends ClassVisitor implements ClassMetadata 
 
 	@Override
 	public boolean isIndependent() {
+		//没有封闭的class或者是独立的内部类
 		return (this.enclosingClassName == null || this.independentInnerClass);
 	}
 
