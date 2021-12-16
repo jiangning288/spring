@@ -12,7 +12,7 @@ import sun.tools.tree.Context;
  * @description: TODO
  * @date 2021/9/4 11:23 下午
  */
-@Component
+//@Component
 public class ApplicationStartedEventListener implements ApplicationListener<ContextRefreshedEvent> {
 
 	@Override

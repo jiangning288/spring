@@ -503,6 +503,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 				ImportRegistry ir = this.beanFactory.getBean(IMPORT_REGISTRY_BEAN_NAME, ImportRegistry.class);
 				AnnotationMetadata importingClass = ir.getImportingClassFor(bean.getClass().getSuperclass().getName());
 				if (importingClass != null) {
+					//用来获取注解上的key-value值，例如redishttpseesion
 					((ImportAware) bean).setImportMetadata(importingClass);
 				}
 			}
