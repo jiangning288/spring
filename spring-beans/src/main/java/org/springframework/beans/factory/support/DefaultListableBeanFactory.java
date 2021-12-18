@@ -817,17 +817,27 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 		// Iterate over a copy to allow for init methods which in turn register new bean definitions.
 		// While this may not be part of the regular factory bootstrap, it does otherwise work fine.
+		// 先得到BeanDefinitionMap中已经注册的所有Bean Definition名称
+		// 思考？为什么可以不用	synchronized 获取
 		List<String> beanNames = new ArrayList<>(this.beanDefinitionNames);
 
 		// Trigger initialization of all non-lazy singleton beans...
 		for (String beanName : beanNames) {
+			//合并父类的bean定义，主要在xml中才有
 			RootBeanDefinition bd = getMergedLocalBeanDefinition(beanName);
+			//非抽象，单例，非懒加载
 			if (!bd.isAbstract() && bd.isSingleton() && !bd.isLazyInit()) {
+				//判断是不是一个FactoryBean
 				if (isFactoryBean(beanName)) {
+					//是的话要加前缀获取FactoryBean
 					Object bean = getBean(FACTORY_BEAN_PREFIX + beanName);
 					if (bean instanceof FactoryBean) {
+						//进行类型转化
 						final FactoryBean<?> factory = (FactoryBean<?>) bean;
+						//是否需要立即创建FactoryBean中的bean
 						boolean isEagerInit;
+						//判断这个FactoryBean是否希望立即初始化
+						//注：如果想提前创建bean，则需要实现 FactoryBean 的子接口 SmartFactoryBean 并重写isEagerInit 方法
 						if (System.getSecurityManager() != null && factory instanceof SmartFactoryBean) {
 							isEagerInit = AccessController.doPrivileged((PrivilegedAction<Boolean>)
 											((SmartFactoryBean<?>) factory)::isEagerInit,
@@ -842,6 +852,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 						}
 					}
 				}
+				//不是FactoryBean直接getBean
 				else {
 					getBean(beanName);
 				}

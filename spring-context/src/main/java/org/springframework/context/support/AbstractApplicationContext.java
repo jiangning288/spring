@@ -983,6 +983,10 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory beanFactory) {
 		// Initialize conversion service for this context.
+		//为上下文初始化类型转换器，例如spring mvc 中的转换 <!-- 装配自定义的类型转换器 --> <mvc:annotation-driven conversion-service="conversionService"/>
+		//Spring在convert.converter中定义了3中类型的转换器接口，实现其中任何一个接口，然后将其注入到ConversionServiceFactoryBean当中就可以使用。
+		//如果存在Bean，并且是ConversionService的子类，则提前调用getBean方法进行初始化
+		//取出conversionService过程：获取在类TypeConverterDelegate中，从AbstractBeanFactory类中的convertIfNecessary
 		if (beanFactory.containsBean(CONVERSION_SERVICE_BEAN_NAME) &&
 				beanFactory.isTypeMatch(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class)) {
 			beanFactory.setConversionService(
@@ -992,23 +996,34 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		// Register a default embedded value resolver if no bean post-processor
 		// (such as a PropertyPlaceholderConfigurer bean) registered any before:
 		// at this point, primarily for resolution in annotation attribute values.
+		//如果beanFactory之前没有注册嵌入值解析器，则注册默认的嵌入值解析器，主要用于注解值的解析
+		//StringValueResolver属性替换，如果有注册PropertyPlaceholderConfigurer等类型，则在这里替换。
 		if (!beanFactory.hasEmbeddedValueResolver()) {
 			beanFactory.addEmbeddedValueResolver(strVal -> getEnvironment().resolvePlaceholders(strVal));
 		}
 
 		// Initialize LoadTimeWeaverAware beans early to allow for registering their transformers early.
+		//尽早初始化LoadTimeWeaverAware bean，以便尽早注册转换器
+		//得到所有的实现了LoadTimeWeaverAware接口的子类名称，初始化它们
+		//LoadTimeWeaver用于由Spring动态变换的类，因为它们被装载到Java虚拟机（JVM）。(静态织入）
+		//要启用加载时织入，@EnableLoadTimeWeaving
 		String[] weaverAwareNames = beanFactory.getBeanNamesForType(LoadTimeWeaverAware.class, false, false);
 		for (String weaverAwareName : weaverAwareNames) {
 			getBean(weaverAwareName);
 		}
 
 		// Stop using the temporary ClassLoader for type matching.
+		//禁止使用临时类加载器进行类型匹配
 		beanFactory.setTempClassLoader(null);
 
 		// Allow for caching all bean definition metadata, not expecting further changes.
+		//冻结所有的bean定义，说明注册的bean将不被修改或者进一步的处理
+		//冻结的是之前通过loadBeanDefinition方法注册到DefaultListableBeanFactory的beanDefinitionNames中的名称。为下一步初始化所有非懒加载的单利bean做准备。
+		//this.frozenBeanDefinitionNames = StringUtils.toStringArray(this.beanDefinitionNames);
 		beanFactory.freezeConfiguration();
 
 		// Instantiate all remaining (non-lazy-init) singletons.
+		//【重点！！！】实例化剩下的单例对象（将所有非懒加载的单利Bean进行初始化），DefaultListableBeanFactory
 		beanFactory.preInstantiateSingletons();
 	}
 

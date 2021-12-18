@@ -8,14 +8,14 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 @ComponentScan("com.jiangning")
 public class AppConfig {
 
-	@Bean(name = "messageSource")
-	public MessageSource getMessageSource() {
-		ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
-		messageSource.setDefaultEncoding("UTF-8");
-		messageSource.addBasenames("message", "message_en");
-		return messageSource;
-
-	}
+//	@Bean(name = "messageSource")
+//	public MessageSource getMessageSource() {
+//		ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
+//		messageSource.setDefaultEncoding("UTF-8");
+//		messageSource.addBasenames("message", "message_en");
+//		return messageSource;
+//
+//	}
 
 
 

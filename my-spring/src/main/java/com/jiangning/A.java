@@ -10,11 +10,11 @@ import org.springframework.stereotype.Component;
  * @date 2021/12/2 8:28 下午
  */
 @Component
-public class A {
+public class A extends B{
 
-	@Autowired
-	public void a(B b){
-		System.out.println(b);
-		System.out.println("-------");
-	}
+//	@Autowired
+//	public void a(B b){
+//		System.out.println(b);
+//		System.out.println("-------");
+//	}
 }
