@@ -57,9 +57,15 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 	}
 
 
+	/**
+	 * 首先判断当前bean是否有使用 lookup-method，replaced-method 属性，若没有使用，则直接使用反射即可。
+	 * 若使用，则不能简单的使用反射，需要将这两个配置提供的功能切入进去，所以就必须使用动态代理的方式将两个特性所对应的逻辑的拦截增强器设置进去。
+	 * 这样就可以保证在调用方法的时候会被相应的拦截器增强，返回值为包含拦截器的代理实例。
+	 */
 	@Override
 	public Object instantiate(RootBeanDefinition bd, @Nullable String beanName, BeanFactory owner) {
 		// Don't override the class with CGLIB if no overrides.
+		// 判断是否有使用lookup-method，replaced-method 来标注方法。如果没有直接反射即可。
 		if (!bd.hasMethodOverrides()) {
 			Constructor<?> constructorToUse;
 			synchronized (bd.constructorArgumentLock) {
@@ -88,6 +94,7 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 		}
 		else {
 			// Must generate CGLIB subclass.
+			// 使用CGLIB代理
 			return instantiateWithMethodInjection(bd, beanName, owner);
 		}
 	}

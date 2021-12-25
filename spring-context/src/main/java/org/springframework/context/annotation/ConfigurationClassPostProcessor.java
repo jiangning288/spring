@@ -454,12 +454,14 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			beanDef.setAttribute(AutoProxyUtils.PRESERVE_TARGET_CLASS_ATTRIBUTE, Boolean.TRUE);
 			try {
 				// Set enhanced subclass of the user-specified bean class
+				// 这是原来没有被代理的配置类
 				Class<?> configClass = beanDef.resolveBeanClass(this.beanClassLoader);
 				if (configClass != null) {
 					//enhance()完成对全注解类的cglib代理
 					//【注】输出增强类class文件：我们可以通过如下配置来获取Spring为我们生成的CGLIB代理增强类的class文件
 					//System.setProperty(DebuggingClassWriter.DEBUG_LOCATION_PROPERTY, "my-spring/docs/classes");
 					Class<?> enhancedClass = enhancer.enhance(configClass, this.beanClassLoader);
+					// 如果不一样，说明被代理了
 					if (configClass != enhancedClass) {
 						if (logger.isTraceEnabled()) {
 							logger.trace(String.format("Replacing bean definition '%s' existing class '%s' with " +

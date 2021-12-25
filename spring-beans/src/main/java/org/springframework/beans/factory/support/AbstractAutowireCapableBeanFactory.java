@@ -474,14 +474,30 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// Make sure bean class is actually resolved at this point, and
 		// clone the bean definition in case of a dynamically resolved Class
 		// which cannot be stored in the shared merged bean definition.
+		// 解析beanName对应的beanClass
 		Class<?> resolvedClass = resolveBeanClass(mbd, beanName);
+		//判断了是否是动态解析的bean和是否是共享合并的bean，在这种情况下mbd是无法储存的解析出来class的，所以这里克隆一下mbd对象。
 		if (resolvedClass != null && !mbd.hasBeanClass() && mbd.getBeanClassName() != null) {
 			mbdToUse = new RootBeanDefinition(mbd);
 			mbdToUse.setBeanClass(resolvedClass);
 		}
 
 		// Prepare method overrides.
+		// 处理 lookup-method 和 replace-method 配置，Spring 将这两个配置统称为 override method
+		// lookup-method ：<lookup-method : name 指定方法名，bean 指定方法返回的bean>
+		// 用于注入方法返回结果，也就是说能通过配置方式替换方法返回结果。
+		// (在方法或者抽象方法上使用@Lookup注解，将会根据该方法的返回值，自动在BeanFactory中调用getBean()来注入该Bean)
+		// replaced-method ：<replaced-method: name 指定方法名，replacer 指定代理类>
+		// 可以实现方法主体或返回结果的替换（需要implements MethodReplacer重写reimplement方法）
+		// 通俗来讲：lookup-method 可以注入属性bean， replaced-method 替换方法实现。
+		//【注】1。当元素 lookup-method 和 replaced-method 一起使用时，元素 lookup-method 的优先级更高，会覆盖元素 replaced-method。所以应当避免同时使用这两个元素来配置同一个 method。
+		//     2。元素 replaced-method 可以实现元素 lookup-method 的功能，但是它更强大，接口 org.springframework.beans.factory.support.MethodReplacer 和该元素配合使用。
+		//     3。元素 replaced-method 可以使用其子元素 arg-type 来指定参数类型（字符串，例如类的 FQN），如果没有指定任何 arg-type 元素，则表示该方法无参。
+		//     4。元素 lookup-method 可以悄无声息的覆盖掉某个 bean 的某个 method。而元素 replaced-method 则可以提供更精细的控制，对于应该选取指定名称的哪个方法（即 多个重载方法的场景）。
 		try {
+			// 预处理prepareMethodOverrides()
+			// 处理@LookUp注解在AutowiredAnnotationBeanPostProcessor#determineCandidateConstructors中处理
+			// 真正处理：SimpleInstantiationStrategy#instantiate(RootBeanDefinition, String, BeanFactory)
 			mbdToUse.prepareMethodOverrides();
 		}
 		catch (BeanDefinitionValidationException ex) {
@@ -491,6 +507,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		try {
 			// Give BeanPostProcessors a chance to return a proxy instead of the target bean instance.
+			// 给BeanPostProcessor一个机会去返回一个代理对象. 就是在流水线doCreateBean()生成对象之前, 给用户自定义返回一个对象的机会.
+			// 在 bean 初始化前应用后置处理，如果后置处理返回的 bean 不为空，则直接返回
+			// 也可以通过实现InstantiationAwareBeanPostProcessor这个后置处理器。返回一个spring不需要帮你维护类中依赖的类。
+			// ################# 第一次调用后置处理器 #################
 			Object bean = resolveBeforeInstantiation(beanName, mbdToUse);
 			if (bean != null) {
 				return bean;
@@ -502,6 +522,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		try {
+			// 如果上面没有返回一个代理对象，那么Spring由此开始创建一个Bean
 			Object beanInstance = doCreateBean(beanName, mbdToUse, args);
 			if (logger.isTraceEnabled()) {
 				logger.trace("Finished creating instance of bean '" + beanName + "'");
@@ -1060,17 +1081,28 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @param beanName the name of the bean
 	 * @param mbd the bean definition for the bean
 	 * @return the shortcut-determined bean instance, or {@code null} if none
+	 * 会形成两种执行流程完成BeanDefinition 创建Bean.
+	 * postProcessBeforeInstantiation()--自定义对象-->postProcessAfterInitialization();
+	 * postProcessBeforeInstantiation() -->postProcessAfterInstantiation-->postProcessBeforeInitialization()-->postProcessAfterInitialization()
+	 * 我们看出:postProcessBeforeInstantiation一定执行, postProcessAfterInitialization一定执行.
 	 */
 	@Nullable
 	protected Object resolveBeforeInstantiation(String beanName, RootBeanDefinition mbd) {
 		Object bean = null;
+		//如果beforeInstantiationResolved还没有设置或者是false（说明还没有需要在实例化前执行的操作）
 		if (!Boolean.FALSE.equals(mbd.beforeInstantiationResolved)) {
 			// Make sure bean class is actually resolved at this point.
+			// 判断是否有注册过InstantiationAwareBeanPostProcessor类型的bean
 			if (!mbd.isSynthetic() && hasInstantiationAwareBeanPostProcessors()) {
 				Class<?> targetType = determineTargetType(beanName, mbd);
 				if (targetType != null) {
+					//BeforeInstantiation，即对象实例化前执行，此处可以用来创建代理对象
+					//在bean没有开始实例化之前执行 InstantiationAwareBeanPostProcessor 的postProcessBeforeInstantiation
+					//如果返回null，则继续正常流程执行
 					bean = applyBeanPostProcessorsBeforeInstantiation(targetType, beanName);
 					if (bean != null) {
+						//如果不是空则直接执行BeanPostProcessorsAfterInitialization(这个是BeanPostProcessors中的）
+						//注意这个是初始化之后的方法,也就是通过这个方法实例化了之后，直接执行初始化之后的方法;中间的实例化之后 和 初始化之前都不执行;
 						bean = applyBeanPostProcessorsAfterInitialization(bean, beanName);
 					}
 				}
@@ -1345,14 +1377,18 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			for (BeanPostProcessor bp : getBeanPostProcessors()) {
 				if (bp instanceof InstantiationAwareBeanPostProcessor) {
 					InstantiationAwareBeanPostProcessor ibp = (InstantiationAwareBeanPostProcessor) bp;
+					// 此处执行 postProcessAfterInstantiation方法
 					if (!ibp.postProcessAfterInstantiation(bw.getWrappedInstance(), beanName)) {
+						// postProcessAfterInstantiation 返回true与false决定
+						// 如果返回false，则将continueWithPropertyPopulation改为false
 						continueWithPropertyPopulation = false;
 						break;
 					}
 				}
 			}
 		}
-
+		// postProcessAfterInstantiation 返回 false
+		// 那么continueWithPropertyPopulation 就为false 然后该方法就结束了！！！
 		if (!continueWithPropertyPopulation) {
 			return;
 		}
@@ -1385,9 +1421,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 					InstantiationAwareBeanPostProcessor ibp = (InstantiationAwareBeanPostProcessor) bp;
 					/**
 					 * 在这里通过bean的后置处理器去完成依赖注入
-					 * 如果使用的是@Autowried进行注入的时候，使用的是 {@link AutowiredAnnotationBeanPostProcessor} 进行属性的注入
+					 * 如果使用的是@Autowried进行注入的时候，使用的是 {AutowiredAnnotationBeanPostProcessor} 进行属性的注入
 					 * @see org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor
-					 * 如果使用的xml配置的，那么就使用的是 CommonAnnotationBeanPostProcessor 进行属性的注入
+					 * 如果使用的xml配置的，那么就使用的是 {CommonAnnotationBeanPostProcessor}进行属性的注入
 					 * @see org.springframework.context.annotation.CommonAnnotationBeanPostProcessor
 					 * 注意。这里有一个ConfigurationClassPostProcessor中的内部类ImportAwareBeanPostProcessor，作用是为cglib代理的配置类注入beanfactory
 					 */
@@ -1396,7 +1432,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 						if (filteredPds == null) {
 							filteredPds = filterPropertyDescriptorsForDependencyCheck(bw, mbd.allowCaching);
 						}
-						//自动注入
+						//自动注入 调用 postProcessPropertyValues方法
 						pvsToUse = ibp.postProcessPropertyValues(pvs, filteredPds, bw.getWrappedInstance(), beanName);
 						if (pvsToUse == null) {
 							return;

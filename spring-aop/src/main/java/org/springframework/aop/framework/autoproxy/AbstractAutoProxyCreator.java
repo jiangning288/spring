@@ -137,6 +137,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 
 	private final Map<Object, Class<?>> proxyTypes = new ConcurrentHashMap<>(16);
 
+	//使用一个全局的Map保存不需要生成代理的对象
 	private final Map<Object, Boolean> advisedBeans = new ConcurrentHashMap<>(256);
 
 
@@ -259,6 +260,9 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		// Create proxy here if we have a custom TargetSource.
 		// Suppresses unnecessary default instantiation of the target bean:
 		// The TargetSource will handle target instances in a custom fashion.
+		// 从这里也可以发现，除非有自定义TargetSource创建代理对象返回，否则当前类统一返回null
+		// 即AbstractAutoProxyCreator在没有自定义TargetSource的情况下，只有null返回值
+		// 仅仅通过advisedBeans全局Map记录哪些Bean不需要产生代理
 		TargetSource targetSource = getCustomTargetSource(beanClass, beanName);
 		if (targetSource != null) {
 			if (StringUtils.hasLength(beanName)) {
@@ -292,6 +296,10 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * Create a proxy with the configured interceptors if the bean is
 	 * identified as one to proxy by the subclass.
 	 * @see #getAdvicesAndAdvisorsForBean
+	 */
+	/**
+	 *  Bean初始化完毕之后，执行的后置处理器
+	 *  通过wrapIfNecessary判断是否需要产生代理对象
 	 */
 	@Override
 	public Object postProcessAfterInitialization(@Nullable Object bean, String beanName) {
@@ -332,6 +340,11 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * @param beanName the name of the bean
 	 * @param cacheKey the cache key for metadata access
 	 * @return a proxy wrapping the bean, or the raw bean instance as-is
+	 */
+	/**
+	 * 在BeanPostProcessor初始化完毕之后，也会判断当前bean是否需要生成代理对象
+	 * 不过这里执行的时机和resolveBeforeInstantiation生成代理对象之后直接执行初始化后置处理器不同
+	 * 它通过了Spring创建Bean的其他后置处理器生命周期，其他后置处理器将在后续讨论
 	 */
 	protected Object wrapIfNecessary(Object bean, String beanName, Object cacheKey) {
 		if (StringUtils.hasLength(beanName) && this.targetSourcedBeans.contains(beanName)) {

@@ -131,10 +131,12 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 		Assert.notNull(singletonObject, "Singleton object must not be null");
 		synchronized (this.singletonObjects) {
 			Object oldObject = this.singletonObjects.get(beanName);
+			// 如果缓存有，说明已经注册过
 			if (oldObject != null) {
 				throw new IllegalStateException("Could not register object [" + singletonObject +
 						"] under bean name '" + beanName + "': there is already object [" + oldObject + "] bound");
 			}
+			// 缓存没有，开始注册
 			addSingleton(beanName, singletonObject);
 		}
 	}
@@ -242,6 +244,8 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					this.suppressedExceptions = new LinkedHashSet<>();
 				}
 				try {
+					// 通过工厂创建
+					// 从这个地方得到了bean，所以我们要返回到上层调用，看lambada表达式里的createBean()
 					singletonObject = singletonFactory.getObject();
 					newSingleton = true;
 				}
@@ -268,6 +272,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					//把标识为正在创建的标识去掉
 					afterSingletonCreation(beanName);
 				}
+				// 如果是新创建到，则添加到一级缓存
 				if (newSingleton) {
 					addSingleton(beanName, singletonObject);
 				}

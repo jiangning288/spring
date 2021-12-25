@@ -1461,13 +1461,17 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * (also signals that the returned {@code Class} will never be exposed to application code)
 	 * @return the resolved bean class (or {@code null} if none)
 	 * @throws CannotLoadBeanClassException if we failed to load the class
+	 * 1。如果mbd指定了bean class,就直接返回该bean class
+	 * 2。调用doResolveBeanClass(mbd, typesToMatch)来解析获取对应的bean Class对象然后返回出去。如果成功获取到系统的安全管理器,使用特权的方式调用。
 	 */
 	@Nullable
 	protected Class<?> resolveBeanClass(final RootBeanDefinition mbd, String beanName, final Class<?>... typesToMatch)
 			throws CannotLoadBeanClassException {
 
 		try {
+			//如果mbd指定了bean类,注意这个BeanClass需要是一个Class类型，而不是字符串类型
 			if (mbd.hasBeanClass()) {
+				//获取mbd的指定bean类
 				return mbd.getBeanClass();
 			}
 			if (System.getSecurityManager() != null) {
@@ -1475,6 +1479,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					doResolveBeanClass(mbd, typesToMatch), getAccessControlContext());
 			}
 			else {
+				//获取Class
 				return doResolveBeanClass(mbd, typesToMatch);
 			}
 		}
@@ -1491,6 +1496,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	}
 
 	@Nullable
+	//获取mbd配置的bean类名，将bean类名解析为Class对象,并将解析后的Class对象缓存在mdb中以备将来使用
 	private Class<?> doResolveBeanClass(RootBeanDefinition mbd, Class<?>... typesToMatch)
 			throws ClassNotFoundException {
 
@@ -1548,6 +1554,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		}
 
 		// Resolve regularly, caching the result in the BeanDefinition...
+		// 使用classLoader加载当前BeanDefinitiond对象所配置的Bean类名的Class对象（每次调用都会重新加载,可通过
+		// AbstractBeanDefinition#getBeanClass 获取缓存）：
 		return mbd.resolveBeanClass(beanClassLoader);
 	}
 

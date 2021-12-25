@@ -247,6 +247,8 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 		if (!this.lookupMethodsChecked.contains(beanName)) {
 			try {
 				ReflectionUtils.doWithMethods(beanClass, method -> {
+					//这里对 @Lookup 注解 进行了一个简单处理，将被 @Lookup 注解修饰的方法
+					//添加到RootBeanDefinition 中的 methodOverrides 属性中
 					Lookup lookup = method.getAnnotation(Lookup.class);
 					if (lookup != null) {
 						Assert.state(this.beanFactory != null, "No BeanFactory available");

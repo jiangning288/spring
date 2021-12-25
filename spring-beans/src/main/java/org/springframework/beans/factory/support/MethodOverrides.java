@@ -104,6 +104,7 @@ public class MethodOverrides {
 		synchronized (this.overrides) {
 			MethodOverride match = null;
 			for (MethodOverride candidate : this.overrides) {
+				//匹配方法
 				if (candidate.matches(method)) {
 					match = candidate;
 				}

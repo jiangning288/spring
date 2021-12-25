@@ -461,6 +461,8 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * Return whether this definition specifies a bean class.
 	 */
 	public boolean hasBeanClass() {
+		//判断是不是Class类型。
+		//例如@Compent扫描进来的beanClass就是字符串类型的类名
 		return (this.beanClass instanceof Class);
 	}
 
@@ -1117,6 +1119,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 */
 	public void prepareMethodOverrides() throws BeanDefinitionValidationException {
 		// Check that lookup methods exists.
+		// 判断是否有方法需要重写
 		if (hasMethodOverrides()) {
 			Set<MethodOverride> overrides = getMethodOverrides().getOverrides();
 			synchronized (overrides) {
@@ -1133,9 +1136,21 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * marking it as not overloaded if none found.
 	 * @param mo the MethodOverride object to validate
 	 * @throws BeanDefinitionValidationException in case of validation failure
+	 * 若上述判断有方法需要覆盖，则会调用prepareMethodOverride(MethodOverride mo) 方法。
+	 * 而在 prepareMethodOverride(MethodOverride mo) 方法中会根据需要覆盖的方法名称来获取加载类中关于该方法的实现。
+	 * 如果获取不到 count == 0，则直接抛出异常，如果获取到只有一个 count == 1，
+	 * 则记录该方法并未被重载（因为Spring在方法匹配时，如果一个类中存在若干个重载方法，
+	 * 则在函数调用及增强的时候需要根据参数类型进行匹配，来最终确定调用的方法是哪一个，
+	 * 这里直接设置了该方法并未被重载，在后续方法匹配的时候就不需要进行参数匹配验证，直接调用即可）。
+	 *
+	 * 	打个比方，比如指定覆盖A类中的 a方法，但是A类中可能存在多个a方法或者不存在a方法，
+	 * 	若count == 0 不存在a方法，则谈何覆盖，直接抛出异常，
+	 * 	若count == 1 则a方法的实现只有一个，标记该方法并未被重载后续可跳过参数验证的步骤。
 	 */
 	protected void prepareMethodOverride(MethodOverride mo) throws BeanDefinitionValidationException {
+		// 获取对应的类中的对应方法名的个数
 		int count = ClassUtils.getMethodCountForName(getBeanClass(), mo.getMethodName());
+		// 等于0抛出异常
 		if (count == 0) {
 			throw new BeanDefinitionValidationException(
 					"Invalid method override: no method with name '" + mo.getMethodName() +
@@ -1143,6 +1158,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 		}
 		else if (count == 1) {
 			// Mark override as not overloaded, to avoid the overhead of arg type checking.
+			// 标记 MethodOverride 暂未被覆盖，避免参数类型检查的开销。
 			mo.setOverloaded(false);
 		}
 	}
