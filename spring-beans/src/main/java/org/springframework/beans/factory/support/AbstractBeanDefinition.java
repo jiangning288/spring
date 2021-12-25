@@ -182,12 +182,14 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	private final Map<String, AutowireCandidateQualifier> qualifiers = new LinkedHashMap<>();
 
 	@Nullable
-	//Spring5中添加
+
 	/**
+	 * Spring5中添加：
 	 * 调用我们指定的Supplier的get()方法获取bean的实例
 	 * 进行一些相关的设置操作
 	 * 如果没有创建对象,直接创建一个NullBean对象.
 	 * 最后是对BeanWrapper对象的创建以及初始化的操作
+	 * 【作用】
 	 * 不管是静态工厂还是工厂方法，都需要通过反射调用目标方法创建对象，反射或多或少影响性能，如果不使用反射呢？
 	 * 就是面向java8函数式接口编程，就是提供一个回调方法，直接调用回调方法即可，不需要通过反射了。
 	 * 源码位置：
